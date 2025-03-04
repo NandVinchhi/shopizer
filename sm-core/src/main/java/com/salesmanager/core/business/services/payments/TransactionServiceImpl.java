@@ -20,54 +20,51 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-
-
 @Service("transactionService")
-public class TransactionServiceImpl  extends SalesManagerEntityServiceImpl<Long, Transaction> implements TransactionService {
-	
+public class TransactionServiceImpl extends SalesManagerEntityServiceImpl<Long, Transaction>
+		implements TransactionService {
 
 	private TransactionRepository transactionRepository;
-	
+
 	@Inject
 	public TransactionServiceImpl(TransactionRepository transactionRepository) {
 		super(transactionRepository);
 		this.transactionRepository = transactionRepository;
 	}
-	
+
 	@Override
 	public void create(Transaction transaction) throws ServiceException {
-		
-		//parse JSON string
+
+		// parse JSON string
 		String transactionDetails = transaction.toJSONString();
-		if(!StringUtils.isBlank(transactionDetails)) {
+		if (!StringUtils.isBlank(transactionDetails)) {
 			transaction.setDetails(transactionDetails);
 		}
-		
+
 		super.create(transaction);
-		
-		
+
 	}
-	
+
 	@Override
 	public List<Transaction> listTransactions(Order order) throws ServiceException {
-		
+
 		List<Transaction> transactions = transactionRepository.findByOrder(order.getId());
 		ObjectMapper mapper = new ObjectMapper();
-		for(Transaction transaction : transactions) {
-				if(!StringUtils.isBlank(transaction.getDetails())) {
-					try {
-						@SuppressWarnings("unchecked")
-						Map<String,String> objects = mapper.readValue(transaction.getDetails(), Map.class);
-						transaction.setTransactionDetails(objects);
-					} catch (Exception e) {
-						throw new ServiceException(e);
-					}
+		for (Transaction transaction : transactions) {
+			if (!StringUtils.isBlank(transaction.getDetails())) {
+				try {
+					@SuppressWarnings("unchecked")
+					Map<String, String> objects = mapper.readValue(transaction.getDetails(), Map.class);
+					transaction.setTransactionDetails(objects);
+				} catch (Exception e) {
+					throw new ServiceException(e);
 				}
+			}
 		}
-		
+
 		return transactions;
 	}
-	
+
 	/**
 	 * Authorize
 	 * AuthorizeAndCapture
@@ -84,34 +81,30 @@ public class TransactionServiceImpl  extends SalesManagerEntityServiceImpl<Long,
 	 * 
 	 */
 	public Transaction lastTransaction(Order order, MerchantStore store) throws ServiceException {
-		
+
 		List<Transaction> transactions = transactionRepository.findByOrder(order.getId());
-		//ObjectMapper mapper = new ObjectMapper();
-		
-		//TODO order by date
-	    TreeMap<String, Transaction> map = transactions.stream()
-	    	      .collect(
+		// ObjectMapper mapper = new ObjectMapper();
 
-	    	    		  Collectors.toMap(
-	    	    				  Transaction::getTransactionTypeName, transaction -> transaction,(o1, o2) -> o1, TreeMap::new)
-	    	    		  
-	    	    		  
-	    	    		  );
-	    
-		  
-	    
-		//get last transaction
-	    Entry<String,Transaction> last = map.lastEntry();
-	    
-	    String currentStep = last.getKey();
-	    
-	    System.out.println("Current step " + currentStep);
-	    
-	    //find next step
-	    
-	    return last.getValue();
-	    
+		// TODO order by date
+		TreeMap<String, Transaction> map = transactions.stream()
+				.collect(
 
+						Collectors.toMap(
+								Transaction::getTransactionTypeName, transaction -> transaction, (o1, o2) -> o1,
+								TreeMap::new)
+
+				);
+
+		// get last transaction
+		Entry<String, Transaction> last = map.lastEntry();
+
+		String currentStep = last.getKey();
+
+		System.out.println("Current step " + currentStep);
+
+		// find next step
+
+		return last.getValue();
 
 	}
 
@@ -121,12 +114,12 @@ public class TransactionServiceImpl  extends SalesManagerEntityServiceImpl<Long,
 		List<Transaction> transactions = transactionRepository.findByOrder(order.getId());
 		ObjectMapper mapper = new ObjectMapper();
 		Transaction capturable = null;
-		for(Transaction transaction : transactions) {
-			if(transaction.getTransactionType().name().equals(TransactionType.AUTHORIZE.name())) {
-				if(!StringUtils.isBlank(transaction.getDetails())) {
+		for (Transaction transaction : transactions) {
+			if (transaction.getTransactionType().name().equals(TransactionType.AUTHORIZE.name())) {
+				if (!StringUtils.isBlank(transaction.getDetails())) {
 					try {
 						@SuppressWarnings("unchecked")
-						Map<String,String> objects = mapper.readValue(transaction.getDetails(), Map.class);
+						Map<String, String> objects = mapper.readValue(transaction.getDetails(), Map.class);
 						transaction.setTransactionDetails(objects);
 						capturable = transaction;
 					} catch (Exception e) {
@@ -134,80 +127,74 @@ public class TransactionServiceImpl  extends SalesManagerEntityServiceImpl<Long,
 					}
 				}
 			}
-			if(transaction.getTransactionType().name().equals(TransactionType.CAPTURE.name())) {
+			if (transaction.getTransactionType().name().equals(TransactionType.CAPTURE.name())) {
 				break;
 			}
-			if(transaction.getTransactionType().name().equals(TransactionType.REFUND.name())) {
+			if (transaction.getTransactionType().name().equals(TransactionType.REFUND.name())) {
 				break;
 			}
 		}
-		
+
 		return capturable;
 	}
-	
+
 	@Override
 	public Transaction getRefundableTransaction(Order order)
-		throws ServiceException {
+			throws ServiceException {
 		List<Transaction> transactions = transactionRepository.findByOrder(order.getId());
-		Map<String,Transaction> finalTransactions = new HashMap<String,Transaction>();
+		Map<String, Transaction> finalTransactions = new HashMap<String, Transaction>();
 		Transaction finalTransaction = null;
-		for(Transaction transaction : transactions) {
-			if(transaction.getTransactionType().name().equals(TransactionType.AUTHORIZECAPTURE.name())) {
-				finalTransactions.put(TransactionType.AUTHORIZECAPTURE.name(),transaction);
+		for (Transaction transaction : transactions) {
+			if (transaction.getTransactionType().name().equals(TransactionType.AUTHORIZECAPTURE.name())) {
+				finalTransactions.put(TransactionType.AUTHORIZECAPTURE.name(), transaction);
 				continue;
 			}
-			if(transaction.getTransactionType().name().equals(TransactionType.CAPTURE.name())) {
-				finalTransactions.put(TransactionType.CAPTURE.name(),transaction);
+			if (transaction.getTransactionType().name().equals(TransactionType.CAPTURE.name())) {
+				finalTransactions.put(TransactionType.CAPTURE.name(), transaction);
 				continue;
 			}
-			if(transaction.getTransactionType().name().equals(TransactionType.REFUND.name())) {
-				//check transaction id
+			if (transaction.getTransactionType().name().equals(TransactionType.REFUND.name())) {
+				// check transaction id
 				Transaction previousRefund = finalTransactions.get(TransactionType.REFUND.name());
-				if(previousRefund!=null) {
+				if (previousRefund != null) {
 					Date previousDate = previousRefund.getTransactionDate();
 					Date currentDate = transaction.getTransactionDate();
-					if(previousDate.before(currentDate)) {
-						finalTransactions.put(TransactionType.REFUND.name(),transaction);
+					if (previousDate.before(currentDate)) {
+						finalTransactions.put(TransactionType.REFUND.name(), transaction);
 						continue;
 					}
 				} else {
-					finalTransactions.put(TransactionType.REFUND.name(),transaction);
+					finalTransactions.put(TransactionType.REFUND.name(), transaction);
 					continue;
 				}
 			}
 		}
-		
-		if(finalTransactions.containsKey(TransactionType.AUTHORIZECAPTURE.name())) {
+
+		if (finalTransactions.containsKey(TransactionType.AUTHORIZECAPTURE.name())) {
 			finalTransaction = finalTransactions.get(TransactionType.AUTHORIZECAPTURE.name());
 		}
-		
-		if(finalTransactions.containsKey(TransactionType.CAPTURE.name())) {
+
+		if (finalTransactions.containsKey(TransactionType.CAPTURE.name())) {
 			finalTransaction = finalTransactions.get(TransactionType.CAPTURE.name());
 		}
 
-		if(finalTransaction!=null && !StringUtils.isBlank(finalTransaction.getDetails())) {
+		if (finalTransaction != null && !StringUtils.isBlank(finalTransaction.getDetails())) {
 			try {
 				ObjectMapper mapper = new ObjectMapper();
 				@SuppressWarnings("unchecked")
-				Map<String,String> objects = mapper.readValue(finalTransaction.getDetails(), Map.class);
+				Map<String, String> objects = mapper.readValue(finalTransaction.getDetails(), Map.class);
 				finalTransaction.setTransactionDetails(objects);
 			} catch (Exception e) {
 				throw new ServiceException(e);
 			}
 		}
-		
+
 		return finalTransaction;
 	}
 
 	@Override
 	public List<Transaction> listTransactions(Date startDate, Date endDate) throws ServiceException {
-		
+
 		return transactionRepository.findByDates(startDate, endDate);
 	}
-
-
-	public Transaction findCapturableTransaction(List<Transaction> transactions) {
-    return domainService.findCapturableTransaction(transactions).orElse(null);
-}
-
 }

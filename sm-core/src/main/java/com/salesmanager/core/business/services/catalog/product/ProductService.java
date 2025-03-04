@@ -17,16 +17,6 @@ import com.salesmanager.core.model.merchant.MerchantStore;
 import com.salesmanager.core.model.reference.language.Language;
 import com.salesmanager.core.model.tax.taxclass.TaxClass;
 
-@Service
-public class ProductService {
-
-    @Cacheable("products")
-    public List<Product> getAllProducts() {
-        return productRepository.findAll();
-    }
-}
-
-
 public interface ProductService extends SalesManagerEntityService<Long, Product> {
 
 	Optional<Product> retrieveById(Long id, MerchantStore store);
@@ -42,9 +32,10 @@ public interface ProductService extends SalesManagerEntityService<Long, Product>
 	List<Product> getProducts(List<Long> categoryIds) throws ServiceException;
 
 	List<Product> getProductsByIds(List<Long> productIds) throws ServiceException;
-	
+
 	/**
 	 * The method to be used
+	 * 
 	 * @param product
 	 * @return
 	 * @throws ServiceException
@@ -53,6 +44,7 @@ public interface ProductService extends SalesManagerEntityService<Long, Product>
 
 	/**
 	 * Get a product with only MerchantStore object
+	 * 
 	 * @param productId
 	 * @return
 	 */
@@ -60,12 +52,12 @@ public interface ProductService extends SalesManagerEntityService<Long, Product>
 
 	ProductList listByStore(MerchantStore store, Language language,
 			ProductCriteria criteria);
-	
+
 	boolean exists(String sku, MerchantStore store);
-	
-	
+
 	/**
-	 * List using Page interface in order to unify all page requests (since 2.16.0) 
+	 * List using Page interface in order to unify all page requests (since 2.16.0)
+	 * 
 	 * @param store
 	 * @param language
 	 * @param criteria
@@ -87,23 +79,22 @@ public interface ProductService extends SalesManagerEntityService<Long, Product>
 
 	/**
 	 * Product and or product variant
+	 * 
 	 * @param productCode
 	 * @param merchant
 	 * @return
 	 */
 	Product getBySku(String productCode, MerchantStore merchant, Language language) throws ServiceException;
-	
-	
+
 	Product getBySku(String productCode, MerchantStore merchant) throws ServiceException;
 
 	/**
 	 * Find a product for a specific merchant
+	 * 
 	 * @param id
 	 * @param merchant
 	 * @return
 	 */
 	Product findOne(Long id, MerchantStore merchant);
 
-
 }
-

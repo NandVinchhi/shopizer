@@ -44,59 +44,56 @@ public class IndexProductEventListener implements ApplicationListener<ProductEve
 
 	@Autowired
 	private ProductService productService;
-	
-    @Value("${search.noindex:false}")//skip indexing process
-    private boolean noIndex;
+
+	@Value("${search.noindex:false}") // skip indexing process
+	private boolean noIndex;
 
 	/**
 	 * Listens to ProductEvent and ProductVariantEvent
 	 */
 	@Override
 	public void onApplicationEvent(ProductEvent event) {
-		
-		
-		if(!noIndex) {
+
+		if (!noIndex) {
 
 			if (event instanceof SaveProductEvent) {
 				saveProduct((SaveProductEvent) event);
 			}
-	
+
 			if (event instanceof DeleteProductEvent) {
 				deleteProduct((DeleteProductEvent) event);
 			}
-	
+
 			if (event instanceof SaveProductVariantEvent) {
 				saveProductVariant((SaveProductVariantEvent) event);
 			}
-	
+
 			if (event instanceof DeleteProductVariantEvent) {
 				deleteProductVariant((DeleteProductVariantEvent) event);
 			}
-			
+
 			if (event instanceof SaveProductImageEvent) {
 				saveProductImage((SaveProductImageEvent) event);
 			}
-	
+
 			if (event instanceof DeleteProductImageEvent) {
 				deleteProductImage((DeleteProductImageEvent) event);
 			}
-			
+
 			if (event instanceof SaveProductAttributeEvent) {
 				saveProductAttribute((SaveProductAttributeEvent) event);
 			}
-	
+
 			if (event instanceof DeleteProductAttributeEvent) {
 				deleteProductAttribute((DeleteProductAttributeEvent) event);
 			}
-			
-			
-		
+
 		}
 
 	}
-	
+
 	private Product productOfEvent(ProductEvent event) {
-		
+
 		Product product = event.getProduct();
 		MerchantStore store = product.getMerchantStore();
 		try {
@@ -106,27 +103,27 @@ public class IndexProductEventListener implements ApplicationListener<ProductEve
 			 */
 
 			Product fullProduct = productService.findOne(product.getId(), store);
-			
-			if(fullProduct != null) {
+
+			if (fullProduct != null) {
 				product = fullProduct;
 			} else {
 				System.out.println("Product not loaded");
 			}
-			
-		return product;
-			
+
+			return product;
+
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-		
+
 	}
 
 	void saveProduct(SaveProductEvent event) {
-		
+
 		try {
 			Product product = productOfEvent(event);
 			MerchantStore store = product.getMerchantStore();
-	
+
 			searchService.index(store, product);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -198,14 +195,12 @@ public class IndexProductEventListener implements ApplicationListener<ProductEve
 		}
 
 	}
-	
 
 	void saveProductImage(SaveProductImageEvent event) {
 
 		Product product = productOfEvent(event);
 
 		MerchantStore store = product.getMerchantStore();
-
 
 		ProductImage image = event.getProductImage();// to be removed
 
@@ -228,36 +223,38 @@ public class IndexProductEventListener implements ApplicationListener<ProductEve
 		}
 
 	}
-	
+
 	void deleteProductImage(DeleteProductImageEvent event) {
-		
-		//Product will be updated anyway so there is no need to reindex following an image removal
+
+		// Product will be updated anyway so there is no need to reindex following an
+		// image removal
 		return;
-		
+
 		/**
-
-		Product product = productOfEvent(event);
-
-		MerchantStore store = product.getMerchantStore();
-
-		List<ProductImage> filteredImages = product.getImages().stream()
-				.filter(i -> i.getId().longValue() != i.getId().longValue()).collect(Collectors.toList());
-
-
-		Set<ProductImage> allImages = new HashSet<ProductImage>(filteredImages);
-		product.setImages(allImages);
-
-		try {
-			
-
-			//searchService.index(store, product);
-		} catch (ServiceException e) {
-			throw new RuntimeException(e);
-		}
-		**/
+		 * 
+		 * Product product = productOfEvent(event);
+		 * 
+		 * MerchantStore store = product.getMerchantStore();
+		 * 
+		 * List<ProductImage> filteredImages = product.getImages().stream()
+		 * .filter(i -> i.getId().longValue() !=
+		 * i.getId().longValue()).collect(Collectors.toList());
+		 * 
+		 * 
+		 * Set<ProductImage> allImages = new HashSet<ProductImage>(filteredImages);
+		 * product.setImages(allImages);
+		 * 
+		 * try {
+		 * 
+		 * 
+		 * //searchService.index(store, product);
+		 * } catch (ServiceException e) {
+		 * throw new RuntimeException(e);
+		 * }
+		 **/
 
 	}
-	
+
 	void saveProductAttribute(SaveProductAttributeEvent event) {
 
 		Product product = productOfEvent(event);
@@ -285,7 +282,7 @@ public class IndexProductEventListener implements ApplicationListener<ProductEve
 		}
 
 	}
-	
+
 	void deleteProductAttribute(DeleteProductAttributeEvent event) {
 
 		Product product = productOfEvent(event);
