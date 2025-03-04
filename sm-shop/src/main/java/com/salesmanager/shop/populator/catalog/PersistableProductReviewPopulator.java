@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.salesmanager.core.business.exception.ConversionException;
 import com.salesmanager.core.business.services.catalog.product.ProductService;
@@ -18,12 +19,15 @@ import com.salesmanager.core.model.customer.Customer;
 import com.salesmanager.core.model.merchant.MerchantStore;
 import com.salesmanager.core.model.reference.language.Language;
 import com.salesmanager.shop.model.catalog.product.PersistableProductReview;
+import com.salesmanager.shop.store.api.v1.customer.CustomerApiClient;
 import com.salesmanager.shop.utils.DateUtil;
 
 public class PersistableProductReviewPopulator extends
 		AbstractDataPopulator<PersistableProductReview, ProductReview> {
 
 	private CustomerService customerService;
+	@Autowired
+	private CustomerApiClient customerApiClient;
 
 	private ProductService productService;
 
@@ -42,7 +46,7 @@ public class PersistableProductReviewPopulator extends
 			ProductReview target, MerchantStore store, Language language)
 			throws ConversionException {
 
-		Validate.notNull(customerService, "customerService cannot be null");
+		Validate.notNull(customerApiClient, "customerApiClient cannot be null");
 		Validate.notNull(productService, "productService cannot be null");
 		Validate.notNull(languageService, "languageService cannot be null");
 		Validate.notNull(source.getRating(), "Rating cannot bot be null");
@@ -53,7 +57,7 @@ public class PersistableProductReviewPopulator extends
 				target = new ProductReview();
 			}
 
-			Customer customer = customerService.getById(source.getCustomerId());
+			Customer customer = customerApiClient.getCustomerById(source.getCustomerId(), store, language);
 
 			// check if customer belongs to store
 			if (customer == null || customer.getMerchantStore().getId().intValue() != store.getId().intValue()) {
